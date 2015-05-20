@@ -24,6 +24,21 @@ const char OPEN  = 96;
 // '$' chosen because end of line in regex
 const char CLOSE = 36;
 
+/* 
+ * values 0-2 represent different drinks on the chart
+ * Spirit
+ *   0 => Vodka => Green
+ *   1 => Gin   => Blue
+ *   2 => Rum   => Red
+ *
+ * Mixer: 
+ *   0 => Lemon Lime Soda => Green
+ *   1 => Orange          => Blue
+ *   2 => Cranberry       => Red
+ */
+int spirit = -1;
+int mixer  = -1;
+
 boolean sending = false;
 
 // For how many loops has the pressure sensor been reading above a certain threshold?
@@ -40,12 +55,13 @@ void loop() {
         state++;
       }
       else {
+        // Throw out a request to connect until the server responds with a '$'
         Serial.println("connect"); 
       }
       break;
     case WAIT_DRINK_1:
     case WAIT_DRINK_2:
-      Serial.println("drink"); 
+      Serial.println("drink");
       // state++;
       break;
     case SEND_DRINK_O:
@@ -76,7 +92,7 @@ boolean message_was_received() {
   }
 }
     
-  // read for incoming messages. c = send, x = don't send:
+// read for incoming messages. c = send, x = don't send:
 //  char inChar = Serial.read();
 //  switch (inChar) {
 //  case 'c':    // connection open
