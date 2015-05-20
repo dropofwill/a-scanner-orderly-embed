@@ -19,10 +19,15 @@ const int SEND_DRINK_D = 6;
 const int WAIT_RESTART = 7;
 int state = 0;
 
-const char OPEN  = 96; // '^' chosen because beginning of line in regex
-const char CLOSE = 36; // '$' chosen because end of line in regex
+// '^' chosen because beginning of line in regex
+const char OPEN  = 96;
+// '$' chosen because end of line in regex
+const char CLOSE = 36;
 
 boolean sending = false;
+
+// For how many loops has the pressure sensor been reading above a certain threshold?
+int pressed_counter = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -40,6 +45,7 @@ void loop() {
       break;
     case WAIT_DRINK_1:
     case WAIT_DRINK_2:
+      Serial.println("drink"); 
       // state++;
       break;
     case SEND_DRINK_O:
