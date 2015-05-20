@@ -1,5 +1,5 @@
 const int FSR_PIN = A0;
-const int FSR_CLICK_THRESHOLD = 512;
+const int FSR_CLICK_THRESHOLD = 300;
 const int FSR_COUNT_THRESHOLD = 1000;
 int fsr_counter = 0;
 int fsr_val = 0;
@@ -31,7 +31,7 @@ const char CLOSE = 36;
 
 /* 
  * values 0-2 represent different drinks on the chart
- * Anythin else means not selected (e.g. -1)
+ * -1 means not selected yet
  * Spirit
  *   0 => Vodka => Green
  *   1 => Gin   => Blue
@@ -45,8 +45,12 @@ const char CLOSE = 36;
 const int RED   = 0;
 const int BLUE  = 1;
 const int GREEN = 2;
-int spirit = -1;
-int mixer  = -1;
+//int spirit = -1;
+//int mixer  = -1;
+// Store as an array, spirit in 0, mixer in 1
+int spirit_mixer[] = {-1, -1};
+// Keep track of the current drink waiting to be selected
+int current_drink_slot = 0;
 
 boolean sending = false;
 
@@ -64,8 +68,9 @@ void loop() {
       break;
     case WAIT_DRINK_1:
     case WAIT_DRINK_2:
-//      Serial.println("drink");
-      // state++;
+//    Serial.println("drink");
+//    Serial.println(fsr_counter);
+      
       break;
     case SEND_DRINK_O:
       // state++;
@@ -85,6 +90,7 @@ void loop() {
   }
 }
 
+// Handles state WAIT_CONNECT
 // Send a connect message until the server responds
 void connect_to_server() {
   if (message_was_received()) {
@@ -96,9 +102,23 @@ void connect_to_server() {
   }
 }
 
-int process_drink_selection() {
+// Handles state WAIT_DRINK_1 & WAIT_DRINK_2
+void process_drink_selection() {
+   if (was_clicked()) {
+    // TODO: hardcoded RGB result for POT testing
+    spirit_mixer[current_drink_slot] = RED;
+    Serial.println(spirit_mixer[current_drink_slot]);
+    current_drink_slot++;
+    
+    if (current_drink_slot > 1) {
+      state = SEND_DRINK_O; 
+    }
+  } 
+}
+
+boolean was_clicked() {
   fsr_val = analogRead(FSR_PIN);
-  Serial.println(fsr_val);
+//  Serial.println(fsr_val);
   
   if (fsr_val > FSR_CLICK_THRESHOLD) {
     fsr_counter++;
@@ -109,11 +129,10 @@ int process_drink_selection() {
   
   if (fsr_counter > FSR_COUNT_THRESHOLD) {
     fsr_counter = 0;
-    // hardcode rgb reading value 
-    return RED;
+    return true;
   }
   else {
-    return -1;
+    return false;
   }
 }
 
