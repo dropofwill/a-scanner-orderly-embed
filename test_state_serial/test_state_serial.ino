@@ -1,3 +1,8 @@
+const int FSR_PIN = A0;
+const int FSR_CLICK_THRESHOLD = 512;
+const int FSR_COUNT_THRESHOLD = 1000;
+int fsr_counter = 0;
+int fsr_val = 0;
 
 /* 
  * 0 = waiting to connect to node
@@ -19,13 +24,14 @@ const int SEND_DRINK_D = 6;
 const int WAIT_RESTART = 7;
 int state = 0;
 
-// '^' chosen because beginning of line in regex
+// 96 is '^', chosen because beginning of line in regex
 const char OPEN  = 96;
-// '$' chosen because end of line in regex
+// 36 is '$', chosen because end of line in regex
 const char CLOSE = 36;
 
 /* 
  * values 0-2 represent different drinks on the chart
+ * Anythin else means not selected (e.g. -1)
  * Spirit
  *   0 => Vodka => Green
  *   1 => Gin   => Blue
@@ -36,6 +42,9 @@ const char CLOSE = 36;
  *   1 => Orange          => Blue
  *   2 => Cranberry       => Red
  */
+const int RED   = 0;
+const int BLUE  = 1;
+const int GREEN = 2;
 int spirit = -1;
 int mixer  = -1;
 
@@ -51,17 +60,11 @@ void setup() {
 void loop() {
   switch (state) {
     case WAIT_CONNECT:
-      if (message_was_received()) {
-        state++;
-      }
-      else {
-        // Throw out a request to connect until the server responds with a '$'
-        Serial.println("connect"); 
-      }
+      connect_to_server();
       break;
     case WAIT_DRINK_1:
     case WAIT_DRINK_2:
-      Serial.println("drink");
+//      Serial.println("drink");
       // state++;
       break;
     case SEND_DRINK_O:
@@ -82,6 +85,39 @@ void loop() {
   }
 }
 
+// Send a connect message until the server responds
+void connect_to_server() {
+  if (message_was_received()) {
+    state = WAIT_DRINK_1;
+  }
+  else {
+    // Throw out a request to connect until the server responds with a '$'
+    Serial.println("connect"); 
+  }
+}
+
+int process_drink_selection() {
+  fsr_val = analogRead(FSR_PIN);
+  Serial.println(fsr_val);
+  
+  if (fsr_val > FSR_CLICK_THRESHOLD) {
+    fsr_counter++;
+  }
+  else {
+    fsr_counter = 0;
+  }
+  
+  if (fsr_counter > FSR_COUNT_THRESHOLD) {
+    fsr_counter = 0;
+    // hardcode rgb reading value 
+    return RED;
+  }
+  else {
+    return -1;
+  }
+}
+
+// Returns true if we get the close char ("$"), false otherwise
 boolean message_was_received() {
   char in_char = Serial.read();
   if (in_char == CLOSE) {
