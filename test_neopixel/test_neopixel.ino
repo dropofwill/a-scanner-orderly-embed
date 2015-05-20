@@ -28,7 +28,7 @@ int delayval = 250; // delay for half a second
 
 void loop() {
   // Read FSR  
-  //  Serial.println(analogRead(A9));
+//  Serial.println(analogRead(A12));
   
   // For a set of NeoPixels the first NeoPixel is 0, second is 1, all the way up to the count of pixels minus one.
   for(int i=0;i<NUMPIXELS;i++){
@@ -48,7 +48,6 @@ void loop() {
   Serial.print("\tR:\t"); Serial.print(red);
   Serial.print("\tG:\t"); Serial.print(green);
   Serial.print("\tB:\t"); Serial.print(blue);
-
 
   // Figure out some basic hex code for visualization
   uint32_t sum = clear;
@@ -75,11 +74,6 @@ void setup() {
     while (1); // halt!
   }
   
-  // use these three pins to drive an LED
-  pinMode(redpin, OUTPUT);
-  pinMode(greenpin, OUTPUT);
-  pinMode(bluepin, OUTPUT);
-  
   // thanks PhilB for this gamma table!
   // it helps convert RGB colors to what humans see
   for (int i=0; i<256; i++) {
@@ -93,11 +87,5 @@ void setup() {
     } else {
       gammatable[i] = x;      
     }
-    //Serial.println(gammatable[i]);
   }
 }
-
-
-void loop() {
-}
-
