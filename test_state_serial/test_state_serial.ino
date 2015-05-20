@@ -70,7 +70,7 @@ void loop() {
     case WAIT_DRINK_2:
 //    Serial.println("drink");
 //    Serial.println(fsr_counter);
-      
+      process_drink_selection();
       break;
     case SEND_DRINK_O:
       // state++;
@@ -105,21 +105,24 @@ void connect_to_server() {
 // Handles state WAIT_DRINK_1 & WAIT_DRINK_2
 void process_drink_selection() {
    if (was_clicked()) {
-    // TODO: hardcoded RGB result for POT testing
-    spirit_mixer[current_drink_slot] = RED;
-    Serial.println(spirit_mixer[current_drink_slot]);
-    current_drink_slot++;
-    
-    if (current_drink_slot > 1) {
-      state = SEND_DRINK_O; 
-    }
-  } 
+     // TODO: hardcoded RGB result for POT testing
+     spirit_mixer[current_drink_slot] = RED;
+     Serial.println(spirit_mixer[current_drink_slot]);
+     current_drink_slot++;
+     
+     if (current_drink_slot > 1) {
+       state = SEND_DRINK_O; 
+     }
+   } 
 }
 
 boolean was_clicked() {
   fsr_val = analogRead(FSR_PIN);
 //  Serial.println(fsr_val);
-  
+
+  // Light up this many leds
+  // const int LOOPS_PER_LED = FSR_CLICK_THRESHOLD / NEOPIXEL_COUNT;
+  // int pins_to_light = (int)(fsr_counter / LOOPS_PER_LED)
   if (fsr_val > FSR_CLICK_THRESHOLD) {
     fsr_counter++;
   }
