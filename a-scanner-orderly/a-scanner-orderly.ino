@@ -30,7 +30,7 @@ const int LOOPS_PER_LED = int(1000.0f/16.0f);
 int fsr_counter = 0;
 int fsr_val = 0;
 
-/* 
+/*
  * 0 = waiting to connect to node
  * 1 = waiting for drink order 1
  * 2 = waiting for drink order 2
@@ -59,7 +59,7 @@ const char CLOSE = 36;
 const char BEGIN = 91; // '['
 const char READY = 93; // ']'
 
-/* 
+/*
  * values 0-2 represent different drinks on the chart
  * -1 means not selected yet
  * Spirit
@@ -67,7 +67,7 @@ const char READY = 93; // ']'
  *   1 => Gin   => Blue
  *   2 => Rum   => Red
  *
- * Mixer: 
+ * Mixer:
  *   0 => Lemon Lime Soda => Green
  *   1 => Orange          => Blue
  *   2 => Cranberry       => Red
@@ -104,17 +104,20 @@ void loop() {
       break;
     case WAIT_DRINK_S:
       if (was_drink_started()) {
-        state = WAIT_DRINK_F; 
+        state = WAIT_DRINK_F;
       }
       break;
     case WAIT_DRINK_F:
       if (was_drink_finished()) {
-        state = SEND_DRINK_D; 
+        state = SEND_DRINK_D;
       }
       break;
     case SEND_DRINK_D:
       if (was_drink_delivered()) {
-        state = WAIT_RESTART; 
+        state = WAIT_RESTART;
+      }
+      else {
+        Serial.println("delivered");
       }
       break;
     case WAIT_RESTART:
@@ -132,7 +135,7 @@ void connect_to_server() {
   }
   else {
     // Throw out a request to connect until the server responds with a '$'
-    Serial.println("connect"); 
+    Serial.println("connect");
   }
 }
 
@@ -142,18 +145,18 @@ void process_drink_selection() {
      spirit_mixer[current_drink_slot] = get_current_color();
      Serial.println(spirit_mixer[current_drink_slot]);
      current_drink_slot++;
-     
+
      if (current_drink_slot > 1) {
-       state = SEND_DRINK_O; 
+       state = SEND_DRINK_O;
      }
-   } 
+   }
 }
 
 void send_drink_selection() {
   stateful_rainbow(SLOW);
-  
+
   String json = "{\"drink\": [";
-  json += spirit_mixer[0]; 
+  json += spirit_mixer[0];
   json += ",";
   json += spirit_mixer[1];
   json += "]}";
@@ -180,7 +183,7 @@ boolean was_clicked() {
     current_neocolor = get_current_neocolor();
     clear_neopixels();
   }
-  
+
   if (fsr_counter > FSR_COUNT_THRESHOLD) {
     fsr_counter = 0;
     clear_neopixels();
@@ -195,7 +198,7 @@ int get_current_color() {
   uint16_t r, g, b, c;
   tcs.getRawData(&r, &g, &b, &c);
   if (r > g && r > b) {
-    return RED; 
+    return RED;
   }
   else if (g > b && g > r) {
     return GREEN;
@@ -223,12 +226,32 @@ boolean was_drink_started() {
 
 boolean was_drink_finished() {
   stateful_rainbow(FAST);
-  return last_char_was(READY);  
+  return last_char_was(READY);
 }
 
 boolean was_drink_delivered() {
   stateful_rainbow(SLOW);
-  return was_clicked();
+  fsr_val = analogRead(FSR_PIN);
+  /* Serial.println(fsr_val); */
+
+  // Light up this many leds
+  // const int LOOPS_PER_LED = FSR_CLICK_THRESHOLD / NEOPIXEL_COUNT;
+  if (fsr_val > FSR_CLICK_THRESHOLD) {
+    fsr_counter++;
+  }
+  else {
+    fsr_counter = 0;
+    clear_neopixels();
+  }
+
+  if (fsr_counter > FSR_COUNT_THRESHOLD) {
+    fsr_counter = 0;
+    clear_neopixels();
+    return true;
+  }
+  else {
+    return false;
+  }
 }
 
 // Returns true if we get the close char ("$"), false otherwise
@@ -254,14 +277,14 @@ void stateful_rainbow(int delay_threshold) {
     strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
   }
   strip.show();
-  
+
   if (delay_counter < delay_threshold) {
     delay_counter++;
   }
   else {
     delay_counter = 0;
     if (color_counter < 256) {
-      color_counter++; 
+      color_counter++;
     }
     else {
       color_counter = 0;
